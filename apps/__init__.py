@@ -5,6 +5,7 @@ Copyright (c) 2019 - present AppSeed.us
 
 import os
 
+from datetime import datetime
 from flask import Flask
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
@@ -14,6 +15,25 @@ from importlib import import_module
 db = SQLAlchemy()
 login_manager = LoginManager()
 
+def make_shell_context(app):
+
+    from apps.authentication.models import Users
+    from apps.home.models import Bill
+
+    @app.shell_context_processor
+    def add_shell_context():
+        user1 = Users()
+        user1.username = 'admin'
+        user2 = Users()
+        user2.username = 'user'
+        user3 = Users()
+        user3.username = 'superuser'   
+        bill = Bill()
+        bill.id = 0
+        bill.value = 150.0
+        bill.timestamp = datetime.utcnow()
+        bill.payed_by = user1.id
+        return {'db': db,'users': Users, 'bill': Bill, 'admin': user1,'testbill': bill}
 
 def register_extensions(app):
     db.init_app(app)
@@ -56,4 +76,5 @@ def create_app(config):
     register_blueprints(app)
     app.register_blueprint(github_blueprint, url_prefix="/login")    
     configure_database(app)
+    make_shell_context(app)
     return app
